@@ -27,6 +27,16 @@ export default {
         const text = message.text || "";
         const caption = message.caption || "";
 
+        if (text === "/id") {
+  await sendMessage(
+    env.BOT_TOKEN,
+    chatId,
+    "🆔 Chat ID: " + chatId
+  );
+
+  return new Response("OK");
+        }
+        
         const username = message.from?.username
           ? "@" + message.from.username
           : "Ko‘rsatilmagan";
