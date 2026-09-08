@@ -14,6 +14,16 @@ export default {
         const message = update.message;
         const chatId = message.chat.id;
 
+        if (message.text === "/id") {
+  await sendMessage(
+    env.BOT_TOKEN,
+    chatId,
+    "🆔 Chat ID: " + chatId
+  );
+
+  return new Response("OK");
+        }
+        
         const text = message.text || "";
         const caption = message.caption || "";
 
