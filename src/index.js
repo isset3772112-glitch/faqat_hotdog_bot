@@ -14,15 +14,9 @@ export default {
         const message = update.message;
         const chatId = message.chat.id;
 
-  return new Response("OK");
-        }
-        
         const text = message.text || "";
         const caption = message.caption || "";
 
-  return new Response("OK");
-        }
-        
         const username = message.from?.username
           ? "@" + message.from.username
           : "Ko‘rsatilmagan";
