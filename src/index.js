@@ -1,7 +1,7 @@
 export default {
   async fetch(request, env) {
     if (request.method !== "POST") {
-      return new Response("FAQAT HOTDOG bot ishlayapti ✅");
+      return new Response("FAQAT HOTDOG bot ishlayapti");
     }
 
     try {
@@ -26,9 +26,10 @@ export default {
           message.from?.last_name || ""
         ].join(" ").trim() || "Ko‘rsatilmagan";
 
-        // ===================================================
+
+        // =====================================================
         // /START
-        // ===================================================
+        // =====================================================
         if (text === "/start") {
 
           await env.STATE.delete(String(chatId));
@@ -59,9 +60,10 @@ export default {
           return new Response("OK");
         }
 
-        // ===================================================
+
+        // =====================================================
         // SALOMLASHISH
-        // ===================================================
+        // =====================================================
         const greetings = [
           "salom",
           "salom!",
@@ -104,9 +106,10 @@ export default {
           return new Response("OK");
         }
 
-        // ===================================================
-        // SAQLANGAN HOLAT
-        // ===================================================
+
+        // =====================================================
+        // SAQLANGAN HOLATNI OLISH
+        // =====================================================
         const savedState = await env.STATE.get(String(chatId));
 
         if (savedState) {
@@ -119,30 +122,83 @@ export default {
             state = null;
           }
 
-          // =================================================
-          // MUROJAAT
-          // =================================================
+
+          // ===================================================
+          // SHIKOYATDA VAQTNI QABUL QILISH
+          // ===================================================
+          if (
+            state &&
+            state.type === "complaint" &&
+            state.branch &&
+            state.stage === "waiting_time"
+          ) {
+
+            // Mijoz yozgan vaqtni saqlaymiz
+            state.eventTime = text || caption || "Ko‘rsatilmagan";
+
+            // Endi murojaat matnini kutamiz
+            state.stage = "waiting_message";
+
+            await env.STATE.put(
+              String(chatId),
+              JSON.stringify(state),
+              {
+                expirationTtl: 1800
+              }
+            );
+
+            await sendMessage(
+              env.BOT_TOKEN,
+              chatId,
+              "Vaqt qabul qilindi.\n\n" +
+              "Endi murojaatingizni yuboring.\n\n" +
+              "Matn yozishingiz mumkin.\n" +
+              "Rasm yuborishingiz mumkin.\n" +
+              "Video yuborishingiz mumkin.\n" +
+              "Fayl yoki ovozli xabar yuborishingiz mumkin.\n\n" +
+              "Bekor qilish uchun /start ni bosing."
+            );
+
+            return new Response("OK");
+          }
+
+
+          // ===================================================
+          // MUROJAATNI QABUL QILISH
+          // ===================================================
           if (
             state &&
             state.type &&
-            state.branch
+            state.branch &&
+            state.stage === "waiting_message"
           ) {
 
             const type =
               state.type === "complaint"
-                ? "📝 SHIKOYAT"
-                : "💡 TAKLIF";
+                ? "🟥 SHIKOYAT"
+                : "🟩 TAKLIF";
+
 
             // =================================================
             // GURUH UCHUN MA'LUMOT
             // =================================================
-            const adminText =
-              "📩 YANGI MUROJAAT\n\n" +
-              "Turi: " + type + "\n" +
-              "🏢 Filial: " + state.branch + "\n" +
-              "👤 Ism: " + name + "\n" +
-              "🔗 Telegram: " + username + "\n" +
-              "🆔 ID: " + chatId + "\n\n";
+            let adminText =
+              type + "\n\n" +
+              "Filial: " + state.branch + "\n";
+
+            // Shikoyat bo'lsa vaqtni qo'shamiz
+            if (state.type === "complaint") {
+              adminText +=
+                "Voqea sodir bo‘lgan vaqt: " +
+                (state.eventTime || "Ko‘rsatilmagan") +
+                "\n";
+            }
+
+            adminText +=
+              "Ism: " + name + "\n" +
+              "Telegram: " + username + "\n" +
+              "ID: " + chatId + "\n\n";
+
 
             // =================================================
             // MATN
@@ -153,10 +209,11 @@ export default {
                 env.BOT_TOKEN,
                 env.ADMIN_CHAT_ID,
                 adminText +
-                "💬 Murojaat:\n" +
+                "Murojaat:\n" +
                 message.text
               );
             }
+
 
             // =================================================
             // RASM
@@ -167,11 +224,11 @@ export default {
                 env.BOT_TOKEN,
                 env.ADMIN_CHAT_ID,
                 adminText +
-                "🖼️ Mijoz rasm yubordi.\n\n" +
+                "Murojaat:\n" +
                 (
                   caption
-                    ? "💬 Izoh:\n" + caption
-                    : "💬 Izoh: yozilmagan"
+                    ? caption
+                    : "Rasm yuborildi"
                 )
               );
 
@@ -182,6 +239,7 @@ export default {
                 message.message_id
               );
             }
+
 
             // =================================================
             // VIDEO
@@ -192,11 +250,11 @@ export default {
                 env.BOT_TOKEN,
                 env.ADMIN_CHAT_ID,
                 adminText +
-                "🎥 Mijoz video yubordi.\n\n" +
+                "Murojaat:\n" +
                 (
                   caption
-                    ? "💬 Izoh:\n" + caption
-                    : "💬 Izoh: yozilmagan"
+                    ? caption
+                    : "Video yuborildi"
                 )
               );
 
@@ -207,6 +265,7 @@ export default {
                 message.message_id
               );
             }
+
 
             // =================================================
             // HUJJAT
@@ -217,11 +276,11 @@ export default {
                 env.BOT_TOKEN,
                 env.ADMIN_CHAT_ID,
                 adminText +
-                "📎 Mijoz fayl yubordi.\n\n" +
+                "Murojaat:\n" +
                 (
                   caption
-                    ? "💬 Izoh:\n" + caption
-                    : "💬 Izoh: yozilmagan"
+                    ? caption
+                    : "Fayl yuborildi"
                 )
               );
 
@@ -233,6 +292,7 @@ export default {
               );
             }
 
+
             // =================================================
             // VOICE
             // =================================================
@@ -242,7 +302,8 @@ export default {
                 env.BOT_TOKEN,
                 env.ADMIN_CHAT_ID,
                 adminText +
-                "🎤 Mijoz ovozli xabar yubordi."
+                "Murojaat:\n" +
+                "Ovozli xabar yuborildi"
               );
 
               await copyMessage(
@@ -253,8 +314,9 @@ export default {
               );
             }
 
+
             // =================================================
-            // BOSHQA
+            // BOSHQA MEDIA
             // =================================================
             else {
 
@@ -262,7 +324,8 @@ export default {
                 env.BOT_TOKEN,
                 env.ADMIN_CHAT_ID,
                 adminText +
-                "📨 Mijoz xabar yubordi."
+                "Murojaat:\n" +
+                "Xabar yuborildi"
               );
 
               await copyMessage(
@@ -273,10 +336,12 @@ export default {
               );
             }
 
+
             // =================================================
-            // STATE TOZALASH
+            // HOLATNI TOZALASH
             // =================================================
             await env.STATE.delete(String(chatId));
+
 
             // =================================================
             // MIJOZGA TASDIQ
@@ -284,8 +349,8 @@ export default {
             await sendMessage(
               env.BOT_TOKEN,
               chatId,
-              "✅ Murojaatingiz qabul qilindi!\n\n" +
-              "🏢 Filial: " + state.branch + "\n\n" +
+              "Murojaatingiz qabul qilindi!\n\n" +
+              "Filial: " + state.branch + "\n\n" +
               "E'tiboringiz uchun rahmat. 🙏\n" +
               "Murojaatingiz mas'ullarga yetkazildi."
             );
@@ -295,14 +360,16 @@ export default {
         }
       }
 
+
       // =====================================================
-      // TUGMA
+      // TUGMA BOSILGANDA
       // =====================================================
       if (update.callback_query) {
 
         const callback = update.callback_query;
         const chatId = callback.message.chat.id;
         const data = callback.data;
+
 
         // ===================================================
         // SHIKOYAT / TAKLIF
@@ -315,12 +382,14 @@ export default {
           await env.STATE.put(
             String(chatId),
             JSON.stringify({
-              type: data
+              type: data,
+              stage: "waiting_branch"
             }),
             {
               expirationTtl: 1800
             }
           );
+
 
           await sendMessage(
             env.BOT_TOKEN,
@@ -354,6 +423,7 @@ export default {
             }
           );
 
+
           await answerCallback(
             env.BOT_TOKEN,
             callback.id
@@ -362,8 +432,9 @@ export default {
           return new Response("OK");
         }
 
+
         // ===================================================
-        // FILIAL 1
+        // YUNUSOBOD
         // ===================================================
         if (data === "branch_yunusobod") {
 
@@ -373,10 +444,50 @@ export default {
             "Yunusobod filiali"
           );
 
-          await askForMessage(
-            env.BOT_TOKEN,
-            chatId
-          );
+          const stateData = await env.STATE.get(String(chatId));
+
+          let state = {};
+
+          try {
+            state = JSON.parse(stateData);
+          } catch {
+            state = {};
+          }
+
+          if (state.type === "complaint") {
+
+            state.stage = "waiting_time";
+
+            await env.STATE.put(
+              String(chatId),
+              JSON.stringify(state),
+              {
+                expirationTtl: 1800
+              }
+            );
+
+            await askForTime(
+              env.BOT_TOKEN,
+              chatId
+            );
+
+          } else {
+
+            state.stage = "waiting_message";
+
+            await env.STATE.put(
+              String(chatId),
+              JSON.stringify(state),
+              {
+                expirationTtl: 1800
+              }
+            );
+
+            await askForMessage(
+              env.BOT_TOKEN,
+              chatId
+            );
+          }
 
           await answerCallback(
             env.BOT_TOKEN,
@@ -386,8 +497,9 @@ export default {
           return new Response("OK");
         }
 
+
         // ===================================================
-        // FILIAL 2
+        // OYBEK
         // ===================================================
         if (data === "branch_oybek") {
 
@@ -397,10 +509,50 @@ export default {
             "Oybek filiali"
           );
 
-          await askForMessage(
-            env.BOT_TOKEN,
-            chatId
-          );
+          const stateData = await env.STATE.get(String(chatId));
+
+          let state = {};
+
+          try {
+            state = JSON.parse(stateData);
+          } catch {
+            state = {};
+          }
+
+          if (state.type === "complaint") {
+
+            state.stage = "waiting_time";
+
+            await env.STATE.put(
+              String(chatId),
+              JSON.stringify(state),
+              {
+                expirationTtl: 1800
+              }
+            );
+
+            await askForTime(
+              env.BOT_TOKEN,
+              chatId
+            );
+
+          } else {
+
+            state.stage = "waiting_message";
+
+            await env.STATE.put(
+              String(chatId),
+              JSON.stringify(state),
+              {
+                expirationTtl: 1800
+              }
+            );
+
+            await askForMessage(
+              env.BOT_TOKEN,
+              chatId
+            );
+          }
 
           await answerCallback(
             env.BOT_TOKEN,
@@ -410,8 +562,9 @@ export default {
           return new Response("OK");
         }
 
+
         // ===================================================
-        // FILIAL 3
+        // BO‘Z BOZOR
         // ===================================================
         if (data === "branch_boz_bozor") {
 
@@ -421,10 +574,50 @@ export default {
             "Bo‘z bozor filiali"
           );
 
-          await askForMessage(
-            env.BOT_TOKEN,
-            chatId
-          );
+          const stateData = await env.STATE.get(String(chatId));
+
+          let state = {};
+
+          try {
+            state = JSON.parse(stateData);
+          } catch {
+            state = {};
+          }
+
+          if (state.type === "complaint") {
+
+            state.stage = "waiting_time";
+
+            await env.STATE.put(
+              String(chatId),
+              JSON.stringify(state),
+              {
+                expirationTtl: 1800
+              }
+            );
+
+            await askForTime(
+              env.BOT_TOKEN,
+              chatId
+            );
+
+          } else {
+
+            state.stage = "waiting_message";
+
+            await env.STATE.put(
+              String(chatId),
+              JSON.stringify(state),
+              {
+                expirationTtl: 1800
+              }
+            );
+
+            await askForMessage(
+              env.BOT_TOKEN,
+              chatId
+            );
+          }
 
           await answerCallback(
             env.BOT_TOKEN,
@@ -434,8 +627,10 @@ export default {
           return new Response("OK");
         }
 
+
         return new Response("OK");
       }
+
 
       return new Response("OK");
 
@@ -455,7 +650,7 @@ export default {
 
 
 // =========================================================
-// FILIALNI SAQLASH
+// FILIALNI STATE GA SAQLASH
 // =========================================================
 async function saveBranch(env, chatId, branch) {
 
@@ -484,6 +679,25 @@ async function saveBranch(env, chatId, branch) {
 
 
 // =========================================================
+// VOQEA VAQTINI SO‘RASH
+// =========================================================
+async function askForTime(
+  token,
+  chatId
+) {
+
+  await sendMessage(
+    token,
+    chatId,
+    "Filial tanlandi.\n\n" +
+    "Voqea sodir bo‘lgan vaqtni kiriting.\n\n" +
+    "Masalan: 08.09.2026 14:30\n\n" +
+    "Bekor qilish uchun /start ni bosing."
+  );
+}
+
+
+// =========================================================
 // MUROJAAT SO‘RASH
 // =========================================================
 async function askForMessage(
@@ -494,18 +708,19 @@ async function askForMessage(
   await sendMessage(
     token,
     chatId,
-    "✅ Filial tanlandi.\n\n" +
+    "Filial tanlandi.\n\n" +
     "Endi murojaatingizni yuboring.\n\n" +
-    "💬 Matn yozishingiz mumkin.\n" +
-    "🖼️ Rasm yuborishingiz mumkin.\n" +
-    "🎥 Video yuborishingiz mumkin.\n\n" +
+    "Matn yozishingiz mumkin.\n" +
+    "Rasm yuborishingiz mumkin.\n" +
+    "Video yuborishingiz mumkin.\n" +
+    "Fayl yoki ovozli xabar yuborishingiz mumkin.\n\n" +
     "Bekor qilish uchun /start ni bosing."
   );
 }
 
 
 // =========================================================
-// TELEGRAMGA XABAR YUBORISH
+// TELEGRAMGA MATN YUBORISH
 // =========================================================
 async function sendMessage(
   token,
@@ -539,6 +754,7 @@ async function sendMessage(
   const result = await response.json();
 
   if (!result.ok) {
+
     console.error(
       "Telegram sendMessage ERROR:",
       JSON.stringify(result)
@@ -584,6 +800,7 @@ async function copyMessage(
   const result = await response.json();
 
   if (!result.ok) {
+
     console.error(
       "Telegram copyMessage ERROR:",
       JSON.stringify(result)
@@ -621,4 +838,4 @@ async function answerCallback(
       })
     }
   );
-      }
+    }
