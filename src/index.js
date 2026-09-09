@@ -26,13 +26,11 @@ export default {
           message.from?.last_name || ""
         ].join(" ").trim() || "Ko‘rsatilmagan";
 
-
-        // =====================================================
+        // ===================================================
         // /START
-        // =====================================================
+        // ===================================================
         if (text === "/start") {
 
-          // Eski holatni tozalash
           await env.STATE.delete(String(chatId));
 
           await sendMessage(
@@ -61,10 +59,9 @@ export default {
           return new Response("OK");
         }
 
-
-        // =====================================================
+        // ===================================================
         // SALOMLASHISH
-        // =====================================================
+        // ===================================================
         const greetings = [
           "salom",
           "salom!",
@@ -107,10 +104,9 @@ export default {
           return new Response("OK");
         }
 
-
-        // =====================================================
-        // FOYDALANUVCHI HOLATINI OLISH
-        // =====================================================
+        // ===================================================
+        // SAQLANGAN HOLAT
+        // ===================================================
         const savedState = await env.STATE.get(String(chatId));
 
         if (savedState) {
@@ -123,23 +119,22 @@ export default {
             state = null;
           }
 
-
-          // ===================================================
-          // MUROJAAT QABUL QILISH
-          // ===================================================
+          // =================================================
+          // MUROJAAT
+          // =================================================
           if (
             state &&
             state.type &&
             state.branch
           ) {
 
-            const type = state.type === "complaint"
-              ? "📝 SHIKOYAT"
-              : "💡 TAKLIF";
-
+            const type =
+              state.type === "complaint"
+                ? "📝 SHIKOYAT"
+                : "💡 TAKLIF";
 
             // =================================================
-            // ADMIN UCHUN MA'LUMOT
+            // GURUH UCHUN MA'LUMOT
             // =================================================
             const adminText =
               "📩 YANGI MUROJAAT\n\n" +
@@ -148,7 +143,6 @@ export default {
               "👤 Ism: " + name + "\n" +
               "🔗 Telegram: " + username + "\n" +
               "🆔 ID: " + chatId + "\n\n";
-
 
             // =================================================
             // MATN
@@ -163,7 +157,6 @@ export default {
                 message.text
               );
             }
-
 
             // =================================================
             // RASM
@@ -190,7 +183,6 @@ export default {
               );
             }
 
-
             // =================================================
             // VIDEO
             // =================================================
@@ -215,7 +207,6 @@ export default {
                 message.message_id
               );
             }
-
 
             // =================================================
             // HUJJAT
@@ -242,7 +233,6 @@ export default {
               );
             }
 
-
             // =================================================
             // VOICE
             // =================================================
@@ -263,9 +253,8 @@ export default {
               );
             }
 
-
             // =================================================
-            // BOSHQA MEDIA
+            // BOSHQA
             // =================================================
             else {
 
@@ -284,12 +273,10 @@ export default {
               );
             }
 
-
             // =================================================
-            // HOLATNI TOZALASH
+            // STATE TOZALASH
             // =================================================
             await env.STATE.delete(String(chatId));
-
 
             // =================================================
             // MIJOZGA TASDIQ
@@ -308,9 +295,8 @@ export default {
         }
       }
 
-
       // =====================================================
-      // TUGMA BOSILGANDA
+      // TUGMA
       // =====================================================
       if (update.callback_query) {
 
@@ -318,16 +304,14 @@ export default {
         const chatId = callback.message.chat.id;
         const data = callback.data;
 
-
         // ===================================================
-        // SHIKOYAT / TAKLIF BOSILDI
+        // SHIKOYAT / TAKLIF
         // ===================================================
         if (
           data === "complaint" ||
           data === "suggestion"
         ) {
 
-          // Hozircha faqat murojaat turini saqlaymiz
           await env.STATE.put(
             String(chatId),
             JSON.stringify({
@@ -337,7 +321,6 @@ export default {
               expirationTtl: 1800
             }
           );
-
 
           await sendMessage(
             env.BOT_TOKEN,
@@ -371,7 +354,6 @@ export default {
             }
           );
 
-
           await answerCallback(
             env.BOT_TOKEN,
             callback.id
@@ -380,9 +362,8 @@ export default {
           return new Response("OK");
         }
 
-
         // ===================================================
-        // YUNUSOBOD FILIALI
+        // FILIAL 1
         // ===================================================
         if (data === "branch_yunusobod") {
 
@@ -405,9 +386,8 @@ export default {
           return new Response("OK");
         }
 
-
         // ===================================================
-        // OYBEK FILIALI
+        // FILIAL 2
         // ===================================================
         if (data === "branch_oybek") {
 
@@ -430,9 +410,8 @@ export default {
           return new Response("OK");
         }
 
-
         // ===================================================
-        // BO‘Z BOZOR FILIALI
+        // FILIAL 3
         // ===================================================
         if (data === "branch_boz_bozor") {
 
@@ -455,14 +434,14 @@ export default {
           return new Response("OK");
         }
 
-
         return new Response("OK");
       }
-
 
       return new Response("OK");
 
     } catch (error) {
+
+      console.error("BOT ERROR:", error);
 
       return new Response(
         "Error: " + error.message,
@@ -476,7 +455,7 @@ export default {
 
 
 // =========================================================
-// FILIALNI STATE GA SAQLASH
+// FILIALNI SAQLASH
 // =========================================================
 async function saveBranch(env, chatId, branch) {
 
@@ -505,7 +484,7 @@ async function saveBranch(env, chatId, branch) {
 
 
 // =========================================================
-// MIJOZDAN MUROJAAT SO‘RASH
+// MUROJAAT SO‘RASH
 // =========================================================
 async function askForMessage(
   token,
@@ -526,7 +505,7 @@ async function askForMessage(
 
 
 // =========================================================
-// TELEGRAMGA MATN YUBORISH
+// TELEGRAMGA XABAR YUBORISH
 // =========================================================
 async function sendMessage(
   token,
@@ -544,7 +523,7 @@ async function sendMessage(
     body.reply_markup = keyboard;
   }
 
-  return await fetch(
+  const response = await fetch(
     `https://api.telegram.org/bot${token}/sendMessage`,
     {
       method: "POST",
@@ -556,11 +535,27 @@ async function sendMessage(
       body: JSON.stringify(body)
     }
   );
+
+  const result = await response.json();
+
+  if (!result.ok) {
+    console.error(
+      "Telegram sendMessage ERROR:",
+      JSON.stringify(result)
+    );
+
+    throw new Error(
+      "Telegram sendMessage: " +
+      (result.description || "Noma'lum xato")
+    );
+  }
+
+  return result;
 }
 
 
 // =========================================================
-// XABARNI ADMINGA KO‘CHIRISH
+// XABARNI GURUHGA KO‘CHIRISH
 // =========================================================
 async function copyMessage(
   token,
@@ -569,7 +564,7 @@ async function copyMessage(
   messageId
 ) {
 
-  return await fetch(
+  const response = await fetch(
     `https://api.telegram.org/bot${token}/copyMessage`,
     {
       method: "POST",
@@ -585,11 +580,27 @@ async function copyMessage(
       })
     }
   );
+
+  const result = await response.json();
+
+  if (!result.ok) {
+    console.error(
+      "Telegram copyMessage ERROR:",
+      JSON.stringify(result)
+    );
+
+    throw new Error(
+      "Telegram copyMessage: " +
+      (result.description || "Noma'lum xato")
+    );
+  }
+
+  return result;
 }
 
 
 // =========================================================
-// TUGMA BOSILGANINI TELEGRAMGA BILDIRISH
+// CALLBACK
 // =========================================================
 async function answerCallback(
   token,
@@ -610,4 +621,4 @@ async function answerCallback(
       })
     }
   );
-}
+      }
