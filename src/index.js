@@ -133,10 +133,8 @@ export default {
             state.stage === "waiting_time"
           ) {
 
-            // Mijoz yozgan vaqtni saqlaymiz
             state.eventTime = text || caption || "Ko‘rsatilmagan";
 
-            // Endi murojaat matnini kutamiz
             state.stage = "waiting_message";
 
             await env.STATE.put(
@@ -186,7 +184,6 @@ export default {
               type + "\n\n" +
               "Filial: " + state.branch + "\n";
 
-            // Shikoyat bo'lsa vaqtni qo'shamiz
             if (state.type === "complaint") {
               adminText +=
                 "Voqea sodir bo‘lgan vaqt: " +
@@ -349,10 +346,11 @@ export default {
             await sendMessage(
               env.BOT_TOKEN,
               chatId,
-              "Murojaatingiz qabul qilindi!\n\n" +
-              "Filial: " + state.branch + "\n\n" +
-              "E'tiboringiz uchun rahmat. 🙏\n" +
-              "Murojaatingiz mas'ullarga yetkazildi."
+              "✅ Murojaatingiz qabul qilindi!\n\n" +
+              "Sizning fikringiz biz uchun juda muhim 😊\n" +
+              "Aynan sizning taklif va fikrlaringiz yordamida kamchiliklarimizni bartaraf eta olamiz.\n\n" +
+              "Bizga befarq bo‘lmaganingiz uchun sizga rahmat! 🌭\n\n" +
+              "Sizning murojaatingiz e’tiborsiz qolmaydi ☺️"
             );
 
             return new Response("OK");
@@ -838,4 +836,4 @@ async function answerCallback(
       })
     }
   );
-    }
+              }
